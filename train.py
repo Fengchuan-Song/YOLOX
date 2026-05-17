@@ -498,10 +498,10 @@ class WaterScenesTrainer(Trainer):
             elif self.args.logger == "wandb":
                 self.wandb_logger.log_metrics(
                     {
-                        "test/map50": metrics.get("map50", ap50),
-                        "test/map75": metrics.get("map75", 0.0),
-                        "test/map50_95": metrics.get("map50_95", ap50_95),
-                        "test/mar50_95": metrics.get("mar50_95", 0.0),
+                        "metrics/mAP50(B)": metrics.get("map50", ap50),
+                        "mAP75": metrics.get("map75", 0.0),
+                        "metrics/mAP50-95(B)": metrics.get("map50_95", ap50_95),
+                        "mAR50:95": metrics.get("mar50_95", 0.0),
                         "train/epoch": self.epoch + 1,
                     }
                 )
@@ -554,6 +554,10 @@ class WaterScenesExpMixin:
         self.exp_name = exp_name
         self.output_dir = args.output_dir
         self.num_classes = len(args.classes)
+        self.input_size = (320, 320)
+        self.test_size = (320, 320)
+        self.multiscale_range = 0
+        self.random_size = (10, 10)
         self.data_dir = args.dataset_root
         self.train_json = ann_files["train"]
         self.eval_split = args.eval_split
