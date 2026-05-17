@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     ann_files = build_coco_annotations(
         dataset_root=args.dataset_root,
-        splits=("train", "val"),
+        splits=("train", args.eval_split),
         classes=args.classes,
         ann_cache_dir=args.ann_cache_dir,
         force=args.force_rebuild_ann,

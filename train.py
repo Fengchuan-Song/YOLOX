@@ -77,6 +77,7 @@ def make_parser():
     parser.add_argument("--output-dir", default="YOLOX_outputs")
     parser.add_argument("--ann-cache-dir", default=os.path.join("datasets", "WaterScenes", "annotations"))
     parser.add_argument("--force-rebuild-ann", action="store_true", help="Rebuild cached COCO json annotations.")
+    parser.add_argument("--eval-split", default="test", choices=["val", "test"], help="Split used for evaluation after each epoch.")
     parser.add_argument("--max-epoch", type=int, default=None)
     parser.add_argument("--batch-size", "-b", type=int, default=16)
     parser.add_argument("--devices", "-d", type=int, default=None)
@@ -163,6 +164,13 @@ def _xml_to_coco_objects(xml_file, class_to_id):
 
 def build_coco_annotations(dataset_root, splits, classes, ann_cache_dir, force=False):
     dataset_root = Path(dataset_root)
+    xml_dir = dataset_root / "detection" / "xml_modified"
+    if not xml_dir.is_dir():
+        raise FileNotFoundError(
+            f"XML annotation directory not found: {xml_dir}. "
+            "Please pass the correct --dataset-root that contains detection/xml_modified."
+        )
+
     ann_cache_dir = Path(ann_cache_dir)
     ann_cache_dir.mkdir(parents=True, exist_ok=True)
     class_to_id = {name: idx + 1 for idx, name in enumerate(classes)}
@@ -219,6 +227,12 @@ def build_coco_annotations(dataset_root, splits, classes, ann_cache_dir, force=F
             out_file,
             skipped_missing_xml,
         )
+        if len(images) == 0:
+            raise ValueError(
+                f"No images with XML annotations were found for split '{split}'. "
+                f"Checked XML files under {xml_dir}. Make sure {split}.txt image names "
+                "match the XML file names in detection/xml_modified."
+            )
     return ann_files
 
 
@@ -542,7 +556,8 @@ class WaterScenesExpMixin:
         self.num_classes = len(args.classes)
         self.data_dir = args.dataset_root
         self.train_json = ann_files["train"]
-        self.test_json = ann_files["test"]
+        self.eval_split = args.eval_split
+        self.eval_json = ann_files[self.eval_split]
         self.data_num_workers = args.num_workers
         self.eval_interval = 1
         if args.max_epoch is not None:
@@ -596,11 +611,11 @@ class WaterScenesExpMixin:
         legacy = kwargs.get("legacy", False)
         return WaterScenesCOCODataset(
             data_dir=self.data_dir,
-            json_file=self.test_json,
+            json_file=self.eval_json,
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
             cache=False,
-            name=f"{self.exp_name}_test",
+            name=f"{self.exp_name}_{self.eval_split}",
         )
 
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
