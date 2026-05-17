@@ -61,7 +61,7 @@ from yolox.utils import (
 )
 
 
-DEFAULT_DATASET_ROOT = r"H:\dataset\WaterScenes"
+DEFAULT_DATASET_ROOT = '/data_ssd/datasets/WaterScenes'
 DEFAULT_CLASSES = ("ship",)
 MODEL_SPECS = {
     "nano": ("yolox_nano_waterscenes", NanoExp),
