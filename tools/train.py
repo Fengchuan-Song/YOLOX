@@ -44,7 +44,13 @@ def make_parser():
     parser.add_argument(
         "--resume", default=False, action="store_true", help="resume training"
     )
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
+    parser.add_argument(
+        "-c",
+        "--ckpt",
+        default=None,
+        type=str,
+        help="checkpoint file, only used when --resume is enabled",
+    )
     parser.add_argument(
         "-e",
         "--start_epoch",
@@ -121,6 +127,12 @@ def main(exp: Exp, args):
 if __name__ == "__main__":
     configure_module()
     args = make_parser().parse_args()
+
+    # Train from scratch by default. YOLOX loads args.ckpt as pretrained weights
+    # when --resume is not set, so ignore ckpt unless it is used for resuming.
+    if not args.resume:
+        args.ckpt = None
+
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
     check_exp_value(exp)
